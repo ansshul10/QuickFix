@@ -1,5 +1,6 @@
 // quickfix-website/server/models/Guide.js
 const mongoose = require('mongoose');
+const slugify = require('slugify'); // Assuming slugify is used for pre-save hook
 
 const GuideSchema = new mongoose.Schema({
     title: {
@@ -16,7 +17,7 @@ const GuideSchema = new mongoose.Schema({
         maxlength: [500, 'Description can not be more than 500 characters']
     },
     content: {
-        type: String,
+        type: String, // This will store the HTML generated from Markdown
         required: [true, 'Please add guide content']
     },
     category: {
@@ -54,7 +55,7 @@ const GuideSchema = new mongoose.Schema({
 // Create guide slug from the title
 GuideSchema.pre('save', function(next) {
     if (this.isModified('title')) {
-        this.slug = require('slugify')(this.title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
+        this.slug = slugify(this.title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g });
     }
     next();
 });
