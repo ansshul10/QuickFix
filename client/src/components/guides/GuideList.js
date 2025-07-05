@@ -88,7 +88,7 @@ function GuideList() {
                     }}
                 />
                 <select
-                    className="p-3 border border-border rounded-lg dark:bg-gray-700 dark:text-white focus:ring-primary focus:border-primary transition-colors"
+                    className="p-3 border border-border rounded-lg dark:bg-gray-700 text-black focus:ring-primary focus:border-primary transition-colors"
                     value={selectedCategory}
                     onChange={(e) => {
                         setSelectedCategory(e.target.value);
@@ -110,7 +110,7 @@ function GuideList() {
                     ))}
                 </select>
                 <select
-                    className="p-3 border border-border rounded-lg dark:bg-gray-700 dark:text-white focus:ring-primary focus:border-primary transition-colors"
+                    className="p-3 border border-border rounded-lg dark:bg-gray-700 text-black focus:ring-primary focus:border-primary transition-colors"
                     value={filterPremium}
                     onChange={(e) => {
                         setFilterPremium(e.target.value);
