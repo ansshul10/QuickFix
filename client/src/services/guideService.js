@@ -34,16 +34,30 @@ export const getCommentsForGuide = async (guideId) => {
     return api.get(`/comments/guide/${guideId}`);
 };
 
+// FIX APPLIED HERE: Changed 'guideId' to 'guide' in the object literal
 export const addComment = async (guideId, content) => {
-    return api.post('/comments', { guideId, content });
+    return api.post('/comments', { guide: guideId, content });
 };
 
 // Ratings
+// FIX APPLIED HERE: Changed 'guideId' to 'guide' in the object literal
 export const addRating = async (guideId, rating) => {
-    return api.post('/ratings', { guideId, rating });
+    return api.post('/ratings', { guide: guideId, rating });
 };
 
-// Categories (Often fetched separately for filters)
+// Categories API calls (ADDED THESE EXPORTS)
 export const getCategories = async () => {
     return api.get('/categories');
+};
+
+export const createCategory = async (categoryData) => {
+    return api.post('/categories', categoryData);
+};
+
+export const updateCategory = async (id, categoryData) => {
+    return api.put(`/categories/${id}`, categoryData);
+};
+
+export const deleteCategory = async (id) => {
+    return api.delete(`/categories/${id}`);
 };
