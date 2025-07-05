@@ -8,6 +8,20 @@ const logger = require('../utils/logger');
 const AppError = require('../utils/appError');
 const slugify = require('slugify'); // For generating SEO-friendly slugs
 const Settings = require('../models/Settings'); // To check dynamic website settings
+const { marked } = require('marked'); // Import the marked library
+
+// Configure marked to render code blocks properly for styling later (optional but good practice)
+marked.setOptions({
+    breaks: true, // Allow GFM line breaks (single newline means <br>)
+    gfm: true, // Use GitHub flavored markdown
+    // highlight: function(code, lang) { // Optional: for syntax highlighting on server
+    //     const hljs = require('highlight.js');
+    //     const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+    //     return hljs.highlight(code, { language }).value;
+    // },
+    // langPrefix: 'hljs language-', // Class prefix for code blocks
+});
+
 
 // Helper to get a setting value from the database
 const getSetting = async (name, defaultValue) => {
@@ -54,7 +68,7 @@ const getGuides = asyncHandler(async (req, res) => {
         .populate('category', 'name')                // Populate category name
         .limit(pageSize)                             // Limit results per page
         .skip(pageSize * (page - 1))                 // Skip documents based on current page
-        .sort({ createdAt: -1 });                   // Sort by newest first
+        .sort({ createdAt: -1 });                    // Sort by newest first
 
     res.json({
         success: true,
@@ -72,7 +86,7 @@ const getGuide = asyncHandler(async (req, res, next) => {
     // Find a single guide by its unique slug
     const guide = await Guide.findOne({ slug: req.params.slug })
         .populate('user', 'username email profilePicture') // Populate creator's details
-        .populate('category', 'name')                        // Populate category name
+        .populate('category', 'name')                      // Populate category name
         .populate({
             path: 'comments', // Populate comments associated with this guide
             populate: {
@@ -90,9 +104,30 @@ const getGuide = asyncHandler(async (req, res, next) => {
         return next(new AppError('This content is for premium users only. Please upgrade your plan.', 403));
     }
 
+    // You were calculating averageRating and userRating in the old code.
+    // Ensure the guide object has a 'ratings' virtual populated to calculate these.
+    // Adding it back as per your original structure implies it's needed here.
+    const populatedGuide = await Guide.populate(guide, {
+        path: 'ratings',
+        options: { sort: { createdAt: -1 } }
+    });
+
+    const ratings = populatedGuide.ratings;
+    const totalRating = ratings.reduce((sum, r) => sum + r.stars, 0);
+    populatedGuide.averageRating = ratings.length > 0 ? totalRating / ratings.length : 0;
+    populatedGuide.numOfReviews = ratings.length;
+
+    if (req.user) {
+        const userRating = ratings.find(r => r.user.toString() === req.user.id);
+        populatedGuide.userRating = userRating ? userRating.stars : 0;
+    } else {
+        populatedGuide.userRating = 0;
+    }
+
+
     res.json({
         success: true,
-        data: guide
+        data: populatedGuide // Send the populated guide data
     });
 });
 
@@ -100,22 +135,23 @@ const getGuide = asyncHandler(async (req, res, next) => {
 // @route   POST /api/guides
 // @access  Private/Admin (only admins can create guides)
 const createGuide = asyncHandler(async (req, res, next) => {
-    // FIX APPLIED HERE: Changed 'categoryId' to 'category' in destructuring
     const { title, description, content, category, isPremium, imageUrl } = req.body;
 
     // Validate category ID
-    // FIX APPLIED HERE: Used 'category' instead of 'categoryId'
     const foundCategory = await Category.findById(category);
     if (!foundCategory) {
         return next(new AppError('Invalid category ID', 400));
     }
+
+    // --- CONVERT MARKDOWN TO HTML HERE ---
+    const htmlContent = marked.parse(content); // Use marked.parse for conversion
 
     // Create a new Guide instance
     const guide = new Guide({
         title,
         slug: slugify(title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g }), // Generate a clean slug
         description,
-        content,
+        content: htmlContent, // Save the converted HTML content
         category: foundCategory._id, // Assign the actual category ObjectId
         user: req.user._id, // Assign the authenticated user as the guide creator
         isPremium: isPremium || false, // Default to false if not provided
@@ -169,7 +205,6 @@ const createGuide = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/guides/:id
 // @access  Private/Admin
 const updateGuide = asyncHandler(async (req, res, next) => {
-    // FIX APPLIED HERE: Changed 'categoryId' to 'category' in destructuring
     const { title, description, content, category, isPremium, imageUrl } = req.body;
 
     const guide = await Guide.findById(req.params.id);
@@ -179,7 +214,6 @@ const updateGuide = asyncHandler(async (req, res, next) => {
     }
 
     // If category is provided, validate it
-    // FIX APPLIED HERE: Used 'category' instead of 'categoryId'
     if (category) {
         const foundCategory = await Category.findById(category);
         if (!foundCategory) {
@@ -189,10 +223,17 @@ const updateGuide = asyncHandler(async (req, res, next) => {
     }
 
     // Update fields if they are provided in the request body
-    guide.title = title || guide.title;
-    if (title) guide.slug = slugify(title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g }); // Regenerate slug if title changes
-    guide.description = description || guide.description;
-    guide.content = content || guide.content;
+    if (title) {
+        guide.title = title;
+        guide.slug = slugify(title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g }); // Regenerate slug if title changes
+    }
+    if (description) guide.description = description;
+
+    // --- CONVERT MARKDOWN TO HTML HERE if content is updated ---
+    if (content) {
+        guide.content = marked.parse(content); // Update with converted HTML content
+    }
+
     guide.isPremium = isPremium !== undefined ? isPremium : guide.isPremium; // Use !== undefined to allow false values
     guide.imageUrl = imageUrl || guide.imageUrl;
 
