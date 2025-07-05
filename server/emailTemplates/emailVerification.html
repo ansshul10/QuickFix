@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your QuickFix Account</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        .header { background-color: #007bff; padding: 30px; text-align: center; color: #ffffff; }
+        .header h1 { margin: 0; font-size: 28px; }
+        .content { padding: 30px; line-height: 1.6; color: #333333; text-align: center; }
+        .content p { margin-bottom: 15px; }
+        .button-container { text-align: center; margin: 30px 0; }
+        .button { background-color: #28a745; color: #ffffff; padding: 12px 25px; border-radius: 5px; text-decoration: none; font-weight: bold; }
+        .button:hover { background-color: #218838; } /* Darker green on hover */
+        .footer { background-color: #eeeeee; padding: 20px; text-align: center; font-size: 12px; color: #777777; border-top: 1px solid #dddddd; }
+        .footer a { color: #007bff; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        .expiry-note { font-size: 14px; color: #888888; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Verify Your QuickFix Account</h1>
+        </div>
+        <div class="content">
+            <p>Hello {{username}},</p>
+            <p>Thank you for registering with QuickFix! To activate your account and unlock full access, please click the button below to verify your email address:</p>
+            <div class="button-container">
+                <a href="{{verificationUrl}}" class="button">Verify My Email</a>
+            </div>
+            <p class="expiry-note">This verification link is valid for {{verification_expire_hours}} hours. After this period, you will need to request a new link.</p>
+            <p>If you did not create an account with us, please ignore this email.</p>
+            <p>Best regards,<br>The QuickFix Team</p>
+        </div>
+        <div class="footer">
+            <p>&copy; {{currentYear}} QuickFix. All rights reserved.</p>
+            <p><a href="{{loginUrl}}" style="color: #777777; text-decoration: underline;">Login</a> | <a href="{{contactUrl}}" style="color: #777777; text-decoration: underline;">Contact Us</a> | <a href="{{privacyUrl}}" style="color: #777777; text-decoration: underline;">Privacy Policy</a> | <a href="{{termsUrl}}" style="color: #777777; text-decoration: underline;">Terms of Service</a></p>
+        </div>
+    </div>
+</body>
+</html>

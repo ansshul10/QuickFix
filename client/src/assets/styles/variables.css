@@ -1,0 +1,59 @@
+/* quickfix-website/client/src/assets/styles/variables.css */
+:root {
+  /* Light Mode - Keeping as is based on your previous input */
+  --color-primary: #3b82f6;
+  /* Blue-500 */
+  --color-secondary: #6366f1;
+  /* Indigo-500 */
+  --color-accent: #f59e0b;
+  /* Amber-500 */
+  --color-background: #ffffff;
+  /* Slate-50 */
+  --color-card-background: #ffffff;
+  --color-text-default: #1e293b;
+  /* Slate-900 */
+  --color-text-secondary: #475569;
+  /* Slate-700 */
+  --color-border: #e2e8f0;
+  /* Slate-200 */
+  --color-success: #22c55e;
+  /* Green-500 */
+  --color-error: #ef4444;
+  /* Red-500 */
+  --color-info: #3b82f6;
+  /* Blue-500 */
+  --color-warning: #f59e0b;
+  /* Amber-500 */
+}
+
+/* Dark Mode - Enhanced for a Deeper, Premium Black Feel */
+html.dark-mode {
+  --color-primary: #db1111;
+  /* A vibrant, desaturated blue for interactive elements */
+  --color-secondary: #1A1A1A;
+  /* A soft, elegant purple for secondary actions/highlights */
+  --color-accent: #fbc453;
+  /* A warm, golden amber for attention-grabbing elements */
+
+  --color-background: #000000;
+  /* True black for the deepest background */
+  --color-card-background: #1A1A1A;
+  /* Your chosen dark gray for cards, provides subtle lift */
+
+  --color-text-default: #E0E0E0;
+  /* Near-white for primary text, excellent contrast */
+  --color-text-secondary: #A0A0A0;
+  /* Mid-gray for less prominent text, maintains readability */
+
+  --color-border: #333333;
+  /* A soft dark gray for borders, blends without disappearing */
+
+  --color-success: #69eb7f;
+  /* A clear, bright green for success states */
+  --color-error: #ff0000;
+  /* A distinct red for error messages */
+  --color-info: #8ab4f8;
+  /* Matches primary for informational cues */
+  --color-warning: #fbc453;
+  /* Matches accent for warnings */
+}

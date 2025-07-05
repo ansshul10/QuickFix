@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickFix Subscription Cancelled</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-top: 5px solid #ffc107; }
+        h1 { color: #ffc107; font-size: 24px; text-align: center; margin-bottom: 20px; }
+        p { margin-bottom: 15px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        .footer a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>&#9888; Your QuickFix Subscription is Cancelled</h1>
+        <p>Dear {{username}},</p>
+        <p>This is to confirm that your QuickFix Premium subscription has been cancelled.</p>
+        <p>If you have any questions, feel free to contact our support team.</p>
+        <p>Best regards,<br>The QuickFix Team</p>
+
+        <div class="footer">
+            <p>&copy; {{currentYear}} QuickFix. All rights reserved.</p>
+            <p><a href="{{contactUrl}}">Contact Us</a> | <a href="{{privacyUrl}}">Privacy Policy</a> | <a href="{{termsUrl}}">Terms of Service</a></p>
+        </div>
+    </div>
+</body>
+</html>

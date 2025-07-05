@@ -1,0 +1,87 @@
+/* quickfix-website/client/src/assets/styles/global.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar styling for a premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #3b82f6;
+  /* Tailwind slate-400 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f5f9;
+  /* Tailwind slate-100 */
+}
+
+/* Dark mode scrollbar */
+html.dark-mode ::-webkit-scrollbar-thumb {
+  background-color: #db1111;
+  /* Tailwind slate-700 */
+}
+
+html.dark-mode ::-webkit-scrollbar-track {
+  background-color: #1A1A1A;
+  /* Tailwind slate-900 */
+}
+
+/* Global focus outline styling for accessibility and aesthetics */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Basic form element overrides if needed, though @tailwindcss/forms handles most */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  @apply border-border focus:border-primary focus:ring-primary rounded-md shadow-sm;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Responsive images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Typography plugin customizations for rich text display */
+.prose :where(code):not(:where([class~="not-prose"] *)) {
+  @apply bg-gray-200 dark:bg-gray-700 text-red-600 dark:text-red-300 rounded px-1 py-0.5;
+}
+
+.prose :where(pre):not(:where([class~="not-prose"] *)) {
+  @apply bg-gray-800 text-white rounded-lg p-4;
+}
+
+/* React-Quill specific styling overrides */
+.ql-toolbar.ql-snow {
+  @apply bg-gray-100 dark:bg-gray-700 border-border rounded-t-lg;
+}
+
+.ql-container.ql-snow {
+  @apply border-border rounded-b-lg;
+}
+
+.ql-editor {
+  @apply bg-cardBackground text-textDefault min-h-[200px];
+}
+
+.ql-editor.ql-blank::before {
+  @apply text-textSecondary opacity-75;
+}

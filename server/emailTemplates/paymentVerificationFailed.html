@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickFix Premium Payment Failed</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-top: 5px solid #dc3545; }
+        h1 { color: #dc3545; font-size: 24px; text-align: center; margin-bottom: 20px; }
+        p { margin-bottom: 15px; }
+        .details-box { background-color: #f8d7da; border-left: 5px solid #dc3545; padding: 15px; margin-top: 20px; border-radius: 4px; color: #721c24; }
+        .details-box p { margin: 5px 0; }
+        .button { display: inline-block; background-color: #007bff; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        .footer a { color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>&#10060; Payment Verification Failed</h1>
+        <p>Dear {{username}},</p>
+        <p>We regret to inform you that your recent payment for QuickFix Premium could not be verified and your premium membership has not been activated at this time.</p>
+
+        <div class="details-box">
+            <p><strong>Reason for Failure:</strong></p>
+            <p>{{rejectionReason}}</p>
+            {{#if adminNotes}}
+            <p><strong>Admin Notes:</strong> {{adminNotes}}</p>
+            {{/if}}
+        </div>
+
+        <p>The details you provided were:</p>
+        <ul>
+            <li><strong>Transaction ID:</strong> {{transactionId}}</li>
+            <li><strong>Reference Code:</strong> {{referenceCode}}</li>
+            <li><strong>Plan:</strong> {{plan}} (Amount: {{amount}} {{currency}})</li>
+        </ul>
+
+        <p>Please double-check the transaction ID (UTR/RRN) and reference code you submitted. Ensure they precisely match the details from your UPI payment application.</p>
+        <p>If you believe this is an error, please try submitting your payment details again on the premium page, or contact our support team with your payment proof (screenshot and full transaction details).</p>
+
+        <p>Thank you for your understanding.</p>
+        <p>Best regards,<br>The QuickFix Team</p>
+
+        <div class="footer">
+            <p>&copy; {{currentYear}} QuickFix. All rights reserved.</p>
+            <p><a href="{{contactUrl}}">Contact Us</a> | <a href="{{privacyUrl}}">Privacy Policy</a> | <a href="{{termsUrl}}">Terms of Service</a></p>
+        </div>
+    </div>
+</body>
+</html>
