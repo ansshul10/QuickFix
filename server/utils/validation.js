@@ -1,6 +1,6 @@
-// quickfix-website/server/utils/validation.js (No changes needed, already correct based on provided code)
+// quickfix-website/server/utils/validation.js
 const Joi = require('joi');
-const AppError = require('./appError');
+const AppError = require('./appError'); // Assuming AppError is correctly defined and imported
 
 // Main validation middleware factory
 const validate = (bodySchema, paramSchema = null) => (req, res, next) => {
@@ -131,30 +131,36 @@ const updateAnnouncementSchema = Joi.object({
 }).min(1);
 
 
-// --- GUIDE SCHEMAS ---
+// --- GUIDE SCHEMAS (FIXED) ---
 const createGuideSchema = Joi.object({
     title: Joi.string().min(5).max(100).required(),
+    description: Joi.string().min(10).max(500).required(), // Client sends 'description'
     content: Joi.string().min(50).required(),
-    category: Joi.string().hex().length(24).required(),
-    tags: Joi.array().items(Joi.string().trim()).default([]),
-    isPremium: Joi.boolean().default(false),
-    featuredImage: Joi.string().uri().allow(null, ''),
-    status: Joi.string().valid('draft', 'published', 'archived').default('draft'),
-    keywords: Joi.array().items(Joi.string().trim()).default([]),
-    estimatedReadingTime: Joi.number().integer().min(1).default(5)
+    // Changed 'categoryId' to 'category' here to match what the Guide model expects for its reference field name,
+    // and what the backend controller typically processes.
+    category: Joi.string().hex().length(24).required().messages({
+        'string.empty': 'Category ID is required.',
+        'string.hex': 'Invalid category ID format.',
+        'string.length': 'Invalid category ID length.'
+    }),
+    imageUrl: Joi.string().uri().allow(null, '').optional(), // Client sends 'imageUrl'
+    isPremium: Joi.boolean().default(false), // Client sends 'isPremium'
 });
 
 const updateGuideSchema = Joi.object({
-    title: Joi.string().min(5).max(100).allow(null, ''),
-    content: Joi.string().min(50).allow(null, ''),
-    category: Joi.string().hex().length(24).allow(null, ''),
-    tags: Joi.array().items(Joi.string().trim()),
-    isPremium: Joi.boolean(),
-    featuredImage: Joi.string().uri().allow(null, ''),
-    status: Joi.string().valid('draft', 'published', 'archived'),
-    keywords: Joi.array().items(Joi.string().trim()),
-    estimatedReadingTime: Joi.number().integer().min(1)
+    title: Joi.string().min(5).max(100).optional(),
+    description: Joi.string().min(10).max(500).optional(), // Client sends 'description'
+    content: Joi.string().min(50).optional(),
+    // Changed 'categoryId' to 'category' here to match what the Guide model expects for its reference field name,
+    // and what the backend controller typically processes.
+    category: Joi.string().hex().length(24).optional().messages({
+        'string.hex': 'Invalid category ID format.',
+        'string.length': 'Invalid category ID length.'
+    }),
+    imageUrl: Joi.string().uri().allow(null, '').optional(), // Client sends 'imageUrl'
+    isPremium: Joi.boolean().optional(), // Client sends 'isPremium'
 }).min(1);
+
 
 const guideIdSchema = Joi.object({
     id: Joi.string().hex().length(24).required()
@@ -164,10 +170,10 @@ const guideSlugSchema = Joi.object({
     slug: Joi.string().required()
 });
 
-// --- COMMENT SCHEMAS ---
+// --- COMMENT SCHEMAS (Adjusted for consistency, assuming guideId is sent from client) ---
 const createCommentSchema = Joi.object({
     content: Joi.string().min(5).max(500).required(),
-    guide: Joi.string().hex().length(24).required(),
+    guide: Joi.string().hex().length(24).required(), // Changed from guideId to guide to match Comment model/controller
     parentComment: Joi.string().hex().length(24).allow(null, '')
 });
 
@@ -180,10 +186,10 @@ const commentIdSchema = Joi.object({
 });
 
 
-// --- RATING SCHEMAS ---
+// --- RATING SCHEMAS (Adjusted for consistency, assuming guideId is sent from client) ---
 const createRatingSchema = Joi.object({
     rating: Joi.number().integer().min(1).max(5).required(),
-    guide: Joi.string().hex().length(24).required()
+    guide: Joi.string().hex().length(24).required() // Changed from guideId to guide to match Rating model/controller
 });
 
 const ratingIdSchema = Joi.object({
@@ -193,13 +199,13 @@ const ratingIdSchema = Joi.object({
 
 // --- CATEGORY SCHEMAS ---
 const createCategorySchema = Joi.object({
-    name: Joi.string().min(3).max(50).required().label('Category Name'),
-    description: Joi.string().min(10).max(500).required().label('Category Description')
+    name: Joi.string().min(2).max(50).required().label('Category Name'),
+    description: Joi.string().max(200).allow('').optional().label('Category Description')
 });
 
 const updateCategorySchema = Joi.object({
-    name: Joi.string().min(3).max(50).label('Category Name').allow(null, ''),
-    description: Joi.string().min(10).max(500).label('Category Description').allow(null, '')
+    name: Joi.string().min(2).max(50).label('Category Name').allow(null, ''),
+    description: Joi.string().max(200).label('Category Description').allow(null, '')
 }).min(1);
 
 const categoryIdSchema = Joi.object({
@@ -225,8 +231,8 @@ const getSubscriberByEmailSchema = Joi.object({
 // --- PREMIUM/SUBSCRIPTION SCHEMAS ---
 const submitUpiPaymentConfirmationSchema = Joi.object({
     transactionId: Joi.string().trim().required().label('Transaction ID'),
-    referenceCode: Joi.string().trim().required().label('Reference Code'),
-    selectedPlan: Joi.string().valid('basic', 'advanced', 'pro').required().label('Selected Plan')
+    referenceCode: Joi.string().trim().optional().allow('').label('Reference Code'),
+    selectedPlan: Joi.string().valid('basic', 'advanced', 'pro', 'UPI_Premium_Annual').required().label('Selected Plan')
 });
 
 const adminVerifyPaymentSchema = Joi.object({
@@ -240,16 +246,25 @@ const uploadScreenshotSchema = Joi.object({
 
 // Schema for submitting a new contact message
 const submitContactMessageSchema = Joi.object({
-    name: Joi.string().trim().max(100).required().messages({
+    name: Joi.string().trim().min(2).max(100).required().messages({
         'string.empty': 'Name cannot be empty',
+        'string.min': 'Name must be at least 2 characters.',
         'any.required': 'Name is required'
     }),
     email: Joi.string().email().required().messages({
         'string.empty': 'Email cannot be empty',
         'any.required': 'Email is required'
     }),
-    message: Joi.string().trim().max(1000).required().messages({
+    subject: Joi.string().trim().min(3).max(200).required().messages({
+        'string.empty': 'Subject cannot be empty',
+        'string.min': 'Subject must be at least 3 characters.',
+        'string.max': 'Subject cannot exceed 200 characters.',
+        'any.required': 'Subject is required'
+    }),
+    message: Joi.string().trim().min(10).max(1000).required().messages({
         'string.empty': 'Message cannot be empty',
+        'string.min': 'Message must be at least 10 characters.',
+        'string.max': 'Message cannot exceed 1000 characters.',
         'any.required': 'Message is required'
     })
 });
