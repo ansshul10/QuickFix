@@ -149,7 +149,8 @@ function ManageGuides() {
             return;
         }
 
-        const guideData = { title, description, content, categoryId, isPremium, imageUrl };
+        // FIX APPLIED HERE: Changed 'categoryId' to 'category: categoryId'
+        const guideData = { title, description, content, category: categoryId, isPremium, imageUrl };
         let success = false;
 
         if (formMode === 'add') {
@@ -383,7 +384,7 @@ function ManageGuides() {
                             >
                                 <option value="">Select Category</option>
                                 {categories.map(cat => (
-                                    <option key={cat._id} value={cat.slug}>{cat.name}</option>
+                                    <option key={cat._id} value={cat._id}>{cat.name}</option>
                                 ))}
                             </select>
                             {categoryIdError && <p className="mt-1 text-sm text-error">{categoryIdError}</p>}
