@@ -2,21 +2,25 @@
 const express = require('express');
 const {
     getGuides,
-    getGuide,
+    getGuide,          // This controller needs req.user
     createGuide,
     updateGuide,
     deleteGuide,
     uploadGuideImage
 } = require('../controllers/guideController');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware'); // Import protect and authorize
 const validate = require('../middleware/validationMiddleware');
 const { createGuideSchema, updateGuideSchema } = require('../utils/validation');
 
 const router = express.Router();
 
 // Public routes for guides (anyone can view)
-router.get('/', getGuides);        // Get all guides
-router.get('/:slug', getGuide);    // Get a single guide by its SEO-friendly slug
+router.get('/', getGuides);
+
+// Get a single guide by its SEO-friendly slug
+// ADDED 'protect' MIDDLEWARE HERE. It populates req.user if logged in.
+// If not logged in, req.user will be undefined, and the controller's logic handles that.
+router.get('/:slug', protect, getGuide); // <--- THIS IS THE KEY CHANGE
 
 // Admin routes for guides (CRUD operations)
 router.route('/')
