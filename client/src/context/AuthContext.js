@@ -10,17 +10,12 @@ import { ROUTES } from '../utils/constants';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    // `loading` state here represents the *global* authentication loading,
-    // like initial app boot-up, or background checks.
-    // Individual forms will manage their `formLoading` state.
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true); // Initial loading state for app boot
+    const [loading, setLoading] = useState(true);
     const { settings, loadingSettings } = useContext(SettingsContext);
     const navigate = useNavigate();
 
     const logout = useCallback(async (silent = false) => {
-        // No need to set `setLoading(true)` here, as it's typically a user-initiated action
-        // from a button that will have its own `formLoading` state.
         try {
             const result = await authService.logout();
             setUser(null);
@@ -29,24 +24,21 @@ export const AuthProvider = ({ children }) => {
                 toast.success(result.message || 'Logged out successfully!', { toastId: 'logout-success' });
                 navigate(ROUTES.HOME, { replace: true });
             }
-            return { success: true }; // Indicate success for UI handling
+            return { success: true };
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message;
             if (!silent) {
                 toast.error(errorMessage || 'Logout failed.', { toastId: 'logout-error' });
             }
             logger.error('Logout error:', errorMessage);
-            return { success: false, message: errorMessage }; // Indicate failure for UI handling
+            return { success: false, message: errorMessage };
         }
-        // No `finally` block for setLoading(false) as it's not a global app loading state controlled by this action
     }, [navigate]);
 
     const checkUserStatus = useCallback(async () => {
-        // This is primarily for background re-validation of user session.
-        // It should not set `loading` to true globally, as it runs periodically or on route changes.
-        // The `App.js` component will control the initial `loading` state.
         try {
             const res = await authService.getUserProfile();
+            // Assuming res.data will contain the user object including `isPremium`
             setUser(res.data);
             logger.info('User session re-validated:', res.data.username);
         } catch (error) {
@@ -57,19 +49,15 @@ export const AuthProvider = ({ children }) => {
                 logger.debug('No active session found (401 on /auth/profile).');
             }
         } finally {
-            // This is the correct place to set `setLoading(false)` for the *initial* app load.
-            // Subsequent calls to `checkUserStatus` (e.g., from profile page) won't trigger full screen.
             setLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        // This runs once on mount to check initial user status
         checkUserStatus();
     }, [checkUserStatus]);
 
     useEffect(() => {
-        // Maintenance mode check still relies on global loading and user state
         if (!loadingSettings && settings?.websiteMaintenanceMode && user && user.role !== 'admin') {
             toast.warn(settings?.globalAnnouncement || "Website is currently under maintenance. You have been logged out.", { autoClose: false, closeButton: true, toastId: 'maintenance-logout' });
             logout(true);
@@ -77,12 +65,10 @@ export const AuthProvider = ({ children }) => {
     }, [settings, loadingSettings, user, logout]);
 
     const login = async (email, password) => {
-        // `setLoading(true)` for the main AuthContext loading is not needed here
-        // as the Login component manages its own `formLoading` state for the button.
         try {
             const result = await authService.login(email, password);
             if (result.success) {
-                setUser(result.data);
+                setUser(result.data); // result.data should contain `isPremium`
                 if (result.data.emailVerified || !settings?.enableEmailVerification) {
                     toast.success(`Welcome back, ${result.data.username}!`, { toastId: 'login-success' });
                     const from = window.location.pathname.includes(ROUTES.LOGIN) ? ROUTES.PROFILE : window.location.pathname;
@@ -106,16 +92,14 @@ export const AuthProvider = ({ children }) => {
             const message = error.response?.data?.message || 'Login failed due to an unexpected error.';
             return { success: false, message, needsVerification: error.response?.status === 403 && message.includes('email address is not verified') };
         }
-        // No finally block for setLoading(false) here, as form component will handle it.
     };
 
     const register = async (username, email, password, confirmPassword, newsletterSubscriber) => {
-        // Same as login, register component manages its own formLoading.
         try {
             const result = await authService.register(username, email, password, confirmPassword, newsletterSubscriber);
 
             if (result.success) {
-                setUser(result.data);
+                setUser(result.data); // result.data should contain `isPremium`
                 if (settings?.enableEmailVerification) {
                     toast.success(`Welcome, ${result.data.username}! Your account has been created. Please check your email (${email}) for a verification link to unlock full features.`, { toastId: 'register-success-verify', autoClose: false, closeButton: true });
                     navigate(ROUTES.PROFILE, { replace: true });
@@ -133,16 +117,15 @@ export const AuthProvider = ({ children }) => {
             const message = error.response?.data?.message || 'Registration failed due to an unexpected error.';
             return { success: false, message };
         }
-        // No finally block for setLoading(false) here.
     };
 
 
     const verifyEmail = async (token) => {
-        setLoading(true); // Keep this global loading as it's a critical app flow redirect
+        setLoading(true);
         try {
             const result = await authService.verifyEmail(token);
             if (result.success) {
-                setUser(result.data);
+                setUser(result.data); // result.data should contain `isPremium`
                 toast.success(result.message || 'Email verified successfully! You are now logged in.', { toastId: 'email-verify-success' });
                 navigate(ROUTES.PROFILE, { replace: true });
                 return { success: true, user: result.data };
@@ -155,12 +138,11 @@ export const AuthProvider = ({ children }) => {
             const message = error.response?.data?.message || 'Email verification failed due to an unexpected error.';
             return { success: false, message };
         } finally {
-            setLoading(false); // Resolve global loading
+            setLoading(false);
         }
     };
 
     const resendEmailVerificationLink = async (email) => {
-        // This is called from a component with its own formLoading, so no global setLoading here.
         try {
             const result = await authService.resendEmailVerificationLink(email);
             if (result.success) {
@@ -178,11 +160,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateUser = async (userData) => {
-        // This is called from Profile component with its own formLoading.
         try {
             const result = await authService.updateProfile(userData);
             if (result.success) {
-                setUser(result.data);
+                setUser(result.data); // result.data should contain `isPremium`
                 toast.success(result.message || 'Profile updated successfully!', { toastId: 'profile-update-success' });
                 return true;
             } else {
@@ -197,7 +178,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     const forgotPassword = async (email) => {
-        // This is called from ForgotPassword component with its own formLoading.
         try {
             const result = await authService.forgotPassword(email);
             if (result.success) {
@@ -215,11 +195,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     const resetPassword = async (token, password, confirmPassword) => {
-        // This is called from ResetPassword component with its own formLoading.
         try {
             const result = await authService.resetPassword(token, password, confirmPassword);
             if (result.success) {
-                await checkUserStatus(); // Re-fetch user status after reset to update context
+                await checkUserStatus(); // Re-fetch user status after reset to update context, including isPremium
                 toast.success(result.message || 'Password has been reset and you are logged in!', { toastId: 'reset-password-success' });
                 return { success: true, message: result.message };
             } else {
@@ -234,7 +213,6 @@ export const AuthProvider = ({ children }) => {
     };
 
     const toggleNewsletterSubscription = async () => {
-        // This is called from Profile component with its own formLoading.
         try {
             const result = await authService.toggleNewsletterSubscription();
             if (result.success) {
@@ -255,7 +233,7 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             user,
-            loading, // This `loading` is for initial app/auth status, not per-action loading.
+            loading,
             login,
             register,
             verifyEmail,
