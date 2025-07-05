@@ -7,13 +7,11 @@ import { SettingsContext } from '../../context/SettingsContext';
 import LoadingSpinner from '../common/LoadingSpinner';
 import RatingReview from './RatingReview';
 import { toast } from 'react-toastify';
-import DOMPurify from 'dompurify'; // CORRECTED: Ensure this is imported and installed
+import DOMPurify from 'dompurify';
 import { formatDate } from '../../utils/formatters';
 import { StarIcon as SolidStarIcon } from '@heroicons/react/24/solid';
-// REMOVED: import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline'; // UNUSED, CAN BE REMOVED
 import { ROUTES } from '../../utils/constants';
 
-// Add a specific component for comments to keep GuideDetail cleaner
 function CommentSection({ comments, guideId, addComment, loadingComments, enableComments }) {
     const { user } = useContext(AuthContext);
     const [newComment, setNewComment] = useState('');
@@ -106,7 +104,6 @@ function CommentSection({ comments, guideId, addComment, loadingComments, enable
     );
 }
 
-
 function GuideDetail() {
     const { slug } = useParams();
     const { guide, loading, error, fetchGuideBySlug, addComment, addRating } = useContext(GuideContext);
@@ -122,13 +119,32 @@ function GuideDetail() {
     }
 
     if (error) {
+        // More specific error handling for premium content access
+        const isPremiumAccessError = error.includes("premium users only");
         return (
             <div className="text-center py-12 text-error dark:text-error-light text-lg mt-8">
-                {error}. <Link to={ROUTES.GUIDES} className="text-primary hover:underline">Go back to guides</Link>
-                {error.includes("premium users only") && !user?.isPremium && (
-                    <p className="mt-4 text-textSecondary dark:text-gray-400">
-                        <Link to={ROUTES.PREMIUM} className="text-accent hover:underline font-semibold">Upgrade to Premium</Link> to access this content.
-                    </p>
+                {isPremiumAccessError ? (
+                    <>
+                        <h2 className="text-2xl font-bold text-accent mb-4">Premium Content</h2>
+                        <p className="text-textSecondary dark:text-gray-400 mb-6">
+                            This guide is exclusively for our premium subscribers.
+                        </p>
+                        <Link to={ROUTES.PREMIUM} className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-accent hover:bg-accent-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent">
+                            Subscribe to View Guide
+                        </Link>
+                        <p className="mt-4 text-textSecondary dark:text-gray-400">
+                            Already subscribed? Ensure you are logged in.
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <p>{error}. <Link to={ROUTES.GUIDES} className="text-primary hover:underline">Go back to guides</Link></p>
+                        {error.includes("not found") && (
+                             <p className="mt-4 text-textSecondary dark:text-gray-400">
+                                The guide you are looking for does not exist or has been removed.
+                            </p>
+                        )}
+                    </>
                 )}
             </div>
         );
@@ -138,13 +154,15 @@ function GuideDetail() {
         return <div className="text-center py-12 text-textSecondary dark:text-gray-400 text-lg mt-8">Guide not found.</div>;
     }
 
+    // Determine if content should be blurred
+    const shouldBlurContent = guide.isPremium && (!user || !user.isPremium);
+
     const cleanContent = DOMPurify.sanitize(guide.content, {
         USE_PROFILES: { html: true },
     });
 
     const enableComments = settings?.enableComments;
     const enableRatings = settings?.enableRatings;
-
 
     return (
         <div className="container mx-auto px-4 py-8 bg-background">
@@ -171,16 +189,26 @@ function GuideDetail() {
                         <img
                             src={guide.imageUrl}
                             alt={guide.title}
-                            className="w-full h-80 object-cover rounded-lg shadow-md mb-6"
+                            className={`w-full h-80 object-cover rounded-lg shadow-md mb-6 ${shouldBlurContent ? 'filter blur-md' : ''}`}
                         />
                     )}
                 </div>
 
-                <div className="prose dark:prose-invert max-w-none text-textDefault dark:text-gray-200 leading-relaxed">
+                <div className={`prose dark:prose-invert max-w-none text-textDefault dark:text-gray-200 leading-relaxed relative ${shouldBlurContent ? 'filter blur-md' : ''}`}>
                     <div dangerouslySetInnerHTML={{ __html: cleanContent }} />
+                    {shouldBlurContent && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 text-white text-center p-8">
+                            <SolidStarIcon className="h-16 w-16 text-accent mb-4" />
+                            <p className="text-2xl font-bold mb-4">This is Premium Content</p>
+                            <p className="text-lg mb-6">Unlock all guides by subscribing to a premium plan!</p>
+                            <Link to={ROUTES.PREMIUM} className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-accent hover:bg-accent-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent">
+                                Subscribe to View Guide
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
-                {enableRatings && (
+                {!shouldBlurContent && enableRatings && (
                     <div className="mt-8 border-t border-border dark:border-gray-700 pt-6">
                         <h3 className="text-2xl font-semibold text-textDefault dark:text-white mb-4">Ratings & Reviews</h3>
                         <div className="flex items-center space-x-2 mb-4">
@@ -202,13 +230,15 @@ function GuideDetail() {
                     </div>
                 )}
 
-                <CommentSection
-                    comments={guide.comments}
-                    guideId={guide._id}
-                    addComment={addComment}
-                    loadingComments={loading}
-                    enableComments={enableComments}
-                />
+                {!shouldBlurContent && (
+                    <CommentSection
+                        comments={guide.comments}
+                        guideId={guide._id}
+                        addComment={addComment}
+                        loadingComments={loading}
+                        enableComments={enableComments}
+                    />
+                )}
             </div>
         </div>
     );
