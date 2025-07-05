@@ -51,17 +51,17 @@ const getGuides = asyncHandler(async (req, res) => {
     // Find guides, apply pagination, populate related fields, and sort
     const guides = await Guide.find(query)
         .populate('user', 'username profilePicture') // Populate creator's username and profile picture
-        .populate('category', 'name')                 // Populate category name
-        .limit(pageSize)                              // Limit results per page
-        .skip(pageSize * (page - 1))                  // Skip documents based on current page
-        .sort({ createdAt: -1 });                     // Sort by newest first
+        .populate('category', 'name')                // Populate category name
+        .limit(pageSize)                             // Limit results per page
+        .skip(pageSize * (page - 1))                 // Skip documents based on current page
+        .sort({ createdAt: -1 });                   // Sort by newest first
 
     res.json({
         success: true,
         guides,
         page,
         pages: Math.ceil(count / pageSize), // Total number of pages
-        total: count                     // Total number of guides found
+        total: count                         // Total number of guides found
     });
 });
 
@@ -72,7 +72,7 @@ const getGuide = asyncHandler(async (req, res, next) => {
     // Find a single guide by its unique slug
     const guide = await Guide.findOne({ slug: req.params.slug })
         .populate('user', 'username email profilePicture') // Populate creator's details
-        .populate('category', 'name')                     // Populate category name
+        .populate('category', 'name')                        // Populate category name
         .populate({
             path: 'comments', // Populate comments associated with this guide
             populate: {
@@ -100,11 +100,13 @@ const getGuide = asyncHandler(async (req, res, next) => {
 // @route   POST /api/guides
 // @access  Private/Admin (only admins can create guides)
 const createGuide = asyncHandler(async (req, res, next) => {
-    const { title, description, content, categoryId, isPremium, imageUrl } = req.body;
+    // FIX APPLIED HERE: Changed 'categoryId' to 'category' in destructuring
+    const { title, description, content, category, isPremium, imageUrl } = req.body;
 
     // Validate category ID
-    const category = await Category.findById(categoryId);
-    if (!category) {
+    // FIX APPLIED HERE: Used 'category' instead of 'categoryId'
+    const foundCategory = await Category.findById(category);
+    if (!foundCategory) {
         return next(new AppError('Invalid category ID', 400));
     }
 
@@ -114,7 +116,7 @@ const createGuide = asyncHandler(async (req, res, next) => {
         slug: slugify(title, { lower: true, strict: true, remove: /[*+~.()'"!:@]/g }), // Generate a clean slug
         description,
         content,
-        category: category._id,
+        category: foundCategory._id, // Assign the actual category ObjectId
         user: req.user._id, // Assign the authenticated user as the guide creator
         isPremium: isPremium || false, // Default to false if not provided
         imageUrl: imageUrl || '/images/default-guide.png' // Default image if not provided
@@ -167,7 +169,8 @@ const createGuide = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/guides/:id
 // @access  Private/Admin
 const updateGuide = asyncHandler(async (req, res, next) => {
-    const { title, description, content, categoryId, isPremium, imageUrl } = req.body;
+    // FIX APPLIED HERE: Changed 'categoryId' to 'category' in destructuring
+    const { title, description, content, category, isPremium, imageUrl } = req.body;
 
     const guide = await Guide.findById(req.params.id);
 
@@ -175,13 +178,14 @@ const updateGuide = asyncHandler(async (req, res, next) => {
         return next(new AppError('Guide not found', 404));
     }
 
-    // If categoryId is provided, validate it
-    if (categoryId) {
-        const category = await Category.findById(categoryId);
-        if (!category) {
+    // If category is provided, validate it
+    // FIX APPLIED HERE: Used 'category' instead of 'categoryId'
+    if (category) {
+        const foundCategory = await Category.findById(category);
+        if (!foundCategory) {
             return next(new AppError('Invalid category ID', 400));
         }
-        guide.category = category._id;
+        guide.category = foundCategory._id; // Assign the actual category ObjectId
     }
 
     // Update fields if they are provided in the request body
@@ -240,7 +244,7 @@ const uploadGuideImage = asyncHandler(async (req, res, next) => {
     if (req.body.imageUrl) {
         guide.imageUrl = req.body.imageUrl;
     } else {
-         return next(new AppError('Please provide an image URL', 400));
+        return next(new AppError('Please provide an image URL', 400));
     }
 
     const updatedGuide = await guide.save();
