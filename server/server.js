@@ -306,7 +306,7 @@ app.use(errorHandler);
 // --- Server Start ---
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
-    logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    logger.info(`HURRAY ! Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });
 
 // --- Graceful Shutdown ---
