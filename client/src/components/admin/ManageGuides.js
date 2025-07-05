@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import { GuideContext } from '../../context/GuideContext';
 import { AuthContext } from '../../context/AuthContext';
-import { getCategories } from '../../services/guideService';
+import { getCategories } from '../../services/guideService'; // Assuming this fetches categories
 import LoadingSpinner from '../common/LoadingSpinner';
 import Modal from '../common/Modal';
 import { toast } from 'react-toastify';
@@ -12,14 +12,14 @@ import {
 import {
     validateTitle, validateDescription, validateContent, validateCategoryId, validateUrl
 } from '../../utils/validation';
-// REMOVED: import ReactQuill from 'react-quill';
-// REMOVED: import 'react-quill/dist/quill.snow.css';
+// REMOVED: import ReactQuill from 'react-quill'; // REMOVE THIS LINE
+// REMOVED: import 'react-quill/dist/quill.snow.css'; // REMOVE THIS LINE
 import Pagination from '../common/Pagination';
 import { PAGINATION_DEFAULTS, ROUTES } from '../../utils/constants';
 import { truncateString } from '../../utils/formatters';
 import { StarIcon as SolidStarIcon } from '@heroicons/react/24/solid';
 import { Link } from 'react-router-dom';
-import DOMPurify from 'dompurify'; // Needed for rendering HTML safely if content has it
+import DOMPurify from 'dompurify'; // Needed for rendering HTML safely if content has it (used in view mode within modal)
 
 function ManageGuides() {
     const { guides, guide, loading, error, pagination, fetchGuides, fetchGuideBySlug, addGuide, updateGuide, deleteGuide } = useContext(GuideContext);
@@ -31,7 +31,7 @@ function ManageGuides() {
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [content, setContent] = useState(''); // Changed to string for textarea
+    const [content, setContent] = useState(''); // This will now hold Markdown
     const [categoryId, setCategoryId] = useState('');
     const [isPremium, setIsPremium] = useState(false);
     const [imageUrl, setImageUrl] = useState('');
@@ -77,7 +77,11 @@ function ManageGuides() {
         if (formMode === 'edit' && currentGuide) {
             setTitle(currentGuide.title || '');
             setDescription(currentGuide.description || '');
-            setContent(currentGuide.content || ''); // Content will be string
+            // When editing, the content is already HTML from the DB.
+            // For simplicity, we put the HTML directly into the textarea.
+            // The user will then need to write Markdown, which will be converted on save.
+            // If you stored original markdown, you'd load that here.
+            setContent(currentGuide.content || '');
             setCategoryId(currentGuide.category?._id || '');
             setIsPremium(currentGuide.isPremium || false);
             setImageUrl(currentGuide.imageUrl || '');
@@ -149,7 +153,6 @@ function ManageGuides() {
             return;
         }
 
-        // FIX APPLIED HERE: Changed 'categoryId' to 'category: categoryId'
         const guideData = { title, description, content, category: categoryId, isPremium, imageUrl };
         let success = false;
 
@@ -332,7 +335,8 @@ function ManageGuides() {
                         <p className="text-sm font-medium text-textDefault dark:text-text-default">Premium: {currentGuide?.isPremium ? 'Yes' : 'No'}</p>
                         <div className="prose dark:prose-invert max-w-none border-t border-border dark:border-border pt-4 mt-4">
                             <h4 className="text-lg font-semibold text-textDefault dark:text-text-default">Content:</h4>
-                            <p className="text-textDefault dark:text-text-default">{currentGuide?.content}</p> {/* Replaced with plain text and proper color class */}
+                            {/* DANGEROUSLY SET INNER HTML FOR VIEW MODE IN MODAL */}
+                            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentGuide?.content || '') }} className="text-textDefault dark:text-text-default" />
                         </div>
                     </div>
                 ) : (
@@ -362,16 +366,20 @@ function ManageGuides() {
                             {descriptionError && <p className="mt-1 text-sm text-error">{descriptionError}</p>}
                         </div>
                         <div>
-                            <label htmlFor="content" className="block text-sm font-medium text-textDefault dark:text-text-default mb-1">Content</label>
-                            <textarea // REPLACED ReactQuill with textarea
+                            <label htmlFor="content" className="block text-sm font-medium text-textDefault dark:text-text-default mb-1">Content (Markdown)</label>
+                            <textarea // This is the textarea for Markdown input
                                 id="content"
                                 value={content}
                                 onChange={(e) => { setContent(e.target.value); setContentError(''); }}
                                 rows="8"
-                                className={`w-full p-2 border ${contentError ? 'border-error' : 'border-border'} rounded-md bg-background text-textDefault dark:bg-card-background dark:text-text-default focus:ring-primary focus:border-primary`}
+                                className={`w-full p-2 border ${contentError ? 'border-error' : 'border-border'} rounded-md bg-background text-textDefault dark:bg-card-background dark:text-text-default focus:ring-primary focus:border-primary font-mono text-sm`}
+                                placeholder="Write your guide content using Markdown syntax (e.g., # Heading, **bold**, *italic*, - list item, ```code```)"
                                 disabled={formLoading}
                             ></textarea>
                             {contentError && <p className="mt-1 text-sm text-error">{contentError}</p>}
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Use Markdown for formatting. Headings (#), bold (**text**), italics (*text*), lists (- item), code blocks (```code```).
+                            </p>
                         </div>
                         <div>
                             <label htmlFor="categoryId" className="block text-sm font-medium text-textDefault dark:text-text-default mb-1">Category</label>
