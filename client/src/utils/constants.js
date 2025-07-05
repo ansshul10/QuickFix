@@ -53,6 +53,7 @@ export const ROUTES = {
     RESET_PASSWORD: '/resetpassword/:resettoken',
     // UPDATED: Changed from OTP_VERIFICATION to EMAIL_VERIFICATION and updated path
     EMAIL_VERIFICATION: '/verify-email/:token',
+    ADMIN_CATEGORIES: '/admin-dashboard/categories', // New category route
     PROFILE: '/profile',
     GUIDES: '/guides',
     GUIDE_DETAIL: '/guides/:slug',
@@ -80,4 +81,15 @@ export const ROUTES = {
 export const COOKIE_NAMES = {
     COOKIE_CONSENT: 'quickfix_cookie_consent',
     THEME: 'quickfix_theme',
+};
+
+export const TOAST_OPTIONS = {
+    position: "top-right",
+    autoClose: 5000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: true,
+    draggable: true,
+    progress: undefined,
+    theme: "light", // or "dark"
 };
