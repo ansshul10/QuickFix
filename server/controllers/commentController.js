@@ -33,7 +33,8 @@ const getCommentsForGuide = asyncHandler(async (req, res, next) => {
 // @route   POST /api/comments
 // @access  Private (requires authenticated user)
 const addComment = asyncHandler(async (req, res, next) => {
-    const { content, guideId } = req.body;
+    // FIX APPLIED HERE: Changed 'guideId' to 'guide' in destructuring
+    const { content, guide } = req.body;
 
     // Check if commenting is enabled via website settings
     const enableComments = await getSetting('enableComments', true);
@@ -42,33 +43,36 @@ const addComment = asyncHandler(async (req, res, next) => {
     }
 
     // Ensure the guide exists before adding a comment
-    const guide = await Guide.findById(guideId);
-    if (!guide) {
+    // FIX APPLIED HERE: Used 'guide' instead of 'guideId'
+    const foundGuide = await Guide.findById(guide);
+    if (!foundGuide) {
         return next(new AppError('Guide not found', 404));
     }
 
     // Create the new comment
+    // FIX APPLIED HERE: Used 'guide' instead of 'guideId'
     const comment = await Comment.create({
         content,
         user: req.user._id, // User ID from the authenticated request
-        guide: guideId
+        guide: guide
     });
 
     res.status(201).json({ // 201 Created status
         success: true,
         data: comment
     });
-    logger.info(`User ${req.user.username} added a comment to guide "${guide.title}"`);
+    // FIX APPLIED HERE: Used 'foundGuide.title'
+    logger.info(`User ${req.user.username} added a comment to guide "${foundGuide.title}"`);
 
     // Optional: Notify the guide owner about the new comment
     // Only send if the commenter is not the guide owner
-    if (guide.user.toString() !== req.user._id.toString()) {
+    if (foundGuide.user.toString() !== req.user._id.toString()) {
         await sendNotificationToUser(
-            guide.user, // Recipient: Guide owner's ID
+            foundGuide.user, // Recipient: Guide owner's ID
             'New Comment on Your Guide',
-            `"${req.user.username}" commented on your guide "${guide.title}".`,
+            `"${req.user.username}" commented on your guide "${foundGuide.title}".`,
             'guide_update', // Custom notification type
-            `/guides/${guide.slug}#comments` // Link to the guide's comment section
+            `/guides/${foundGuide.slug}#comments` // Link to the guide's comment section
         );
     }
 });
