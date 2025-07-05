@@ -32,7 +32,8 @@ const getRatingsForGuide = asyncHandler(async (req, res, next) => {
 // @route   POST /api/ratings
 // @access  Private (requires authenticated user)
 const addRating = asyncHandler(async (req, res, next) => {
-    const { rating, guideId } = req.body;
+    // FIX APPLIED HERE: Changed 'guideId' to 'guide' in destructuring
+    const { rating, guide } = req.body;
     const userId = req.user._id;
 
     // Check if rating feature is enabled via website settings
@@ -42,22 +43,25 @@ const addRating = asyncHandler(async (req, res, next) => {
     }
 
     // Ensure the guide exists before adding a rating
-    const guide = await Guide.findById(guideId);
-    if (!guide) {
+    // FIX APPLIED HERE: Used 'guide' instead of 'guideId'
+    const foundGuide = await Guide.findById(guide);
+    if (!foundGuide) {
         return next(new AppError('Guide not found', 404));
     }
 
     // Prevent a user from rating the same guide multiple times
-    const existingRating = await Rating.findOne({ user: userId, guide: guideId });
+    // FIX APPLIED HERE: Used 'guide' instead of 'guideId'
+    const existingRating = await Rating.findOne({ user: userId, guide: guide });
     if (existingRating) {
         return next(new AppError('You have already rated this guide. Please update your existing rating instead.', 400));
     }
 
     // Create the new rating
+    // FIX APPLIED HERE: Used 'guide' instead of 'guideId'
     const newRating = await Rating.create({
         rating,
         user: userId, // User ID from the authenticated request
-        guide: guideId
+        guide: guide
     });
 
     res.status(201).json({ // 201 Created status
@@ -65,7 +69,8 @@ const addRating = asyncHandler(async (req, res, next) => {
         data: newRating,
         message: 'Rating added successfully.'
     });
-    logger.info(`User ${req.user.username} added rating ${rating} to guide "${guide.title}"`);
+    // FIX APPLIED HERE: Used 'foundGuide.title'
+    logger.info(`User ${req.user.username} added rating ${rating} to guide "${foundGuide.title}"`);
 });
 
 // @desc    Update a rating
